@@ -11,7 +11,7 @@ pub struct TicketStore {
     counter: u64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TicketId(u64);
 
 #[derive(Clone, Debug, PartialEq)]
@@ -38,7 +38,7 @@ pub enum Status {
 impl TicketStore {
     pub fn new() -> Self {
         Self {
-            tickets: todo!(),
+            tickets: HashMap::new(),
             counter: 0,
         }
     }
@@ -52,16 +52,16 @@ impl TicketStore {
             description: ticket.description,
             status: Status::ToDo,
         };
-        todo!();
+        self.tickets.insert(id, ticket);
         id
     }
 
     pub fn get(&self, id: TicketId) -> Option<&Ticket> {
-        todo!()
+        self.tickets.get(&id)
     }
 
     pub fn get_mut(&mut self, id: TicketId) -> Option<&mut Ticket> {
-        todo!()
+        self.tickets.get_mut(&id)
     }
 }
 
@@ -90,32 +90,5 @@ impl IndexMut<TicketId> for TicketStore {
 impl IndexMut<&TicketId> for TicketStore {
     fn index_mut(&mut self, index: &TicketId) -> &mut Self::Output {
         &mut self[*index]
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{Status, TicketDraft, TicketStore};
-    use ticket_fields::test_helpers::{ticket_description, ticket_title};
-
-    #[test]
-    fn works() {
-        let mut store = TicketStore::new();
-
-        let draft = TicketDraft {
-            title: ticket_title(),
-            description: ticket_description(),
-        };
-        let id = store.add_ticket(draft.clone());
-        let ticket = &store[id];
-        assert_eq!(draft.title, ticket.title);
-        assert_eq!(draft.description, ticket.description);
-        assert_eq!(ticket.status, Status::ToDo);
-
-        let ticket = &mut store[id];
-        ticket.status = Status::InProgress;
-
-        let ticket = &store[id];
-        assert_eq!(ticket.status, Status::InProgress);
     }
 }

@@ -57,7 +57,27 @@ impl TicketStore {
     pub fn get(&self, id: TicketId) -> Option<&Ticket> {
         self.tickets.iter().find(|&t| t.id == id)
     }
+
+    pub fn get_mut(&mut self, id: TicketId) -> Option<&mut Ticket> {
+        self.tickets.iter_mut().find(|t| t.id == id)
+    }
+
+    
 }
+
+use std::ops::IndexMut;
+
+    impl IndexMut<TicketId> for TicketStore {
+        fn index_mut(&mut self, index: TicketId) -> &mut Self::Output {
+            self.get_mut(index).unwrap()
+        }
+    }
+
+    impl IndexMut<&TicketId> for TicketStore {
+        fn index_mut(&mut self, index: &TicketId) -> &mut Self::Output {
+            self.get_mut(*index).unwrap()
+        }
+    }
 
 impl Index<TicketId> for TicketStore {
     type Output = Ticket;
