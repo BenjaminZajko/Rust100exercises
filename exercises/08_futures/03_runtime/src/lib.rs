@@ -4,13 +4,52 @@
 use std::fmt::Display;
 use tokio::io::AsyncWriteExt;
 use tokio::net::TcpListener;
+use std::sync::Arc;
 
-pub async fn fixed_reply<T>(first: TcpListener, second: TcpListener, reply: T)
+pub async fn fixed_reply<T>(first: TcpListener, second: TcpListener, reply: T) -> Result<(), anyhow::Error>
 where
     // `T` cannot be cloned. How do you share it between the two server tasks?
     T: Display + Send + Sync + 'static,
 {
-    todo!()
+    let reply = Arc::new(reply);
+    let reply1 = Arc::clone(&reply);
+    let reply2 = Arc::clone(&reply);
+
+    let handle1 = tokio::spawn(reply_loop(first, reply1));
+    let handle2 = tokio::spawn(reply_loop(second, reply2));
+
+    let _ = tokio::join!(handle1, handle2);
+
+    Ok(())
+}
+
+async fn reply_loop<T>(listener: TcpListener, reply: Arc<T>) -> Result<(), anyhow::Error>
+where
+    T: Display + Send + Sync + 'static,
+{
+    loop {
+        let (mut socket, _addr) = listener.accept().await?;
+        let reply = Arc::clone(&reply);
+
+        tokio::spawn(async move {
+            if let Err(e) = socket.write_all(reply.to_string().as_bytes()).await {
+            eprintln!("Chyba pri zápise: {}", e);
+            }
+        });
+    }
+}
+
+async fn accept_loop(listener: TcpListener) -> Result<(), anyhow::Error> {
+    loop {
+        let (mut socket, _addr) = listener.accept().await?;
+
+        tokio::spawn(async move {
+            let (mut reader, mut writer) = socket.split();
+            if let Err(e) = tokio::io::copy(&mut reader, &mut writer).await {
+                eprintln!("Chyba pri kopírovaní: {}", e);
+            }
+        });
+    }
 }
 
 #[cfg(test)]
