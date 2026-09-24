@@ -29,6 +29,23 @@ enum Status {
     Done,
 }
 
+use std::fmt;
+
+#[derive(Debug, PartialEq, Clone)]
+enum TicketNewError {
+    TitleError(String),
+    DescriptionError(String),
+}
+
+impl fmt::Display for TicketNewError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TicketNewError::TitleError(msg) => write!(f, "{}", msg),
+            TicketNewError::DescriptionError(msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
 impl Ticket {
     pub fn new(title: String, description: String, status: Status) -> Result<Ticket, TicketNewError> {
         if title.is_empty() {
